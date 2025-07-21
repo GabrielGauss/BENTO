@@ -35,7 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <aside
             id="sidebar"
             className={cn(
-                "bg-black border-r border-gray-700 shadow-md z-20 flex-shrink-0",
+                "bg-black border-r border-gray-700 shadow-md z-20 shrink-0",
                 "transition-all duration-300 ease-in-out", // Use transition-all for width and transform
                 // Mobile State (Overlay)
                 "fixed md:static top-14 bottom-0", // Fixed on mobile, static on desktop

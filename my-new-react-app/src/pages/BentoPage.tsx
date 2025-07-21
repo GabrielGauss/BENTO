@@ -213,7 +213,7 @@ const BentoPage = () => {
     {/* Main area: sidebar + content */}
     <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
-      <aside className="w-64 h-full bg-gray-900 text-white flex-shrink-0 flex flex-col shadow-lg p-4">
+      <aside className="w-64 h-full bg-gray-900 text-white shrink-0 flex flex-col shadow-lg p-4">
         {/* Sidebar content */}
         <div className="space-y-2">
           <SidebarButton icon={Home} label="Home" isActive={!selectedTag} onClick={clearTag} />

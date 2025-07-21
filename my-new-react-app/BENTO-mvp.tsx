@@ -275,7 +275,7 @@ const SidebarButton = ({
         )}
         title={isCollapsed ? label : undefined} // Show tooltip when collapsed
     >
-        <Icon className={cn("w-4 h-4 flex-shrink-0", !isCollapsed && "mr-2")} /> {/* Remove margin when collapsed */}
+        <Icon className={cn("w-4 h-4 shrink-0", !isCollapsed && "mr-2")} /> {/* Remove margin when collapsed */}
         {!isCollapsed && <span className="truncate">{label}</span>} {/* Hide label when collapsed */}
     </ButtonComponent>
 );
@@ -419,7 +419,7 @@ const BentoCard = ({
                 )}
             >
                 {/* Content Area */}
-                <div className="flex-grow overflow-hidden"> {/* Allow content to grow */}
+                <div className="grow overflow-hidden"> {/* Allow content to grow */}
                   {renderContent()}
                 </div>
 
@@ -933,9 +933,9 @@ const BentoApp = () => {
     return (
         <div className="w-full h-screen flex flex-col font-sans text-gray-800 bg-[#fdf8f4] relative overflow-hidden">
             {/* Header */}
-            <header className="w-full h-14 flex-shrink-0 flex items-center justify-between px-4 bg-[#fcf9f6]/80 backdrop-blur-sm border-b border-gray-200 shadow-sm z-30">
+            <header className="w-full h-14 shrink-0 flex items-center justify-between px-4 bg-[#fcf9f6]/80 backdrop-blur-sm border-b border-gray-200 shadow-sm z-30">
                 {/* Left Section: Menu Toggles and Logo */}
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                     {/* Desktop Menu Button - Toggles Collapse */}
                     <ButtonComponent
                         id="desktop-menu-button"
@@ -973,7 +973,7 @@ const BentoApp = () => {
                 </div>
 
                 {/* Right Section: Create Button and Action Icons */}
-                <div className="flex items-center gap-1 flex-shrink-0"> {/* Prevent shrinking */}
+                <div className="flex items-center gap-1 shrink-0"> {/* Prevent shrinking */}
                     {/* --- Updated Create Button --- */}
                     <ButtonComponent
                         id="header-create-button"
@@ -1002,7 +1002,7 @@ const BentoApp = () => {
                 <aside
                     id="sidebar"
                     className={cn(
-                        "bg-black border-r border-gray-700 shadow-md z-20 flex-shrink-0",
+                        "bg-black border-r border-gray-700 shadow-md z-20 shrink-0",
                         "transition-all duration-300 ease-in-out", // Use transition-all for width and transform
                         // Mobile State (Overlay)
                         "fixed md:static top-14 bottom-0", // Fixed on mobile, static on desktop
@@ -1042,9 +1042,9 @@ const BentoApp = () => {
                      {/* Tag Filter Bar */}
                      <div
                         ref={tagBarRef}
-                        className="flex-shrink-0 flex gap-2 px-4 py-2 bg-[#f4f1ed]/80 backdrop-blur-sm border-b border-gray-200 items-center overflow-x-auto whitespace-nowrap sticky top-0 z-10 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" // Added sticky, scrollbar styling
+                        className="shrink-0 flex gap-2 px-4 py-2 bg-[#f4f1ed]/80 backdrop-blur-sm border-b border-gray-200 items-center overflow-x-auto whitespace-nowrap sticky top-0 z-10 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" // Added sticky, scrollbar styling
                      >
-                        <Tag className="w-4 h-4 text-gray-500 flex-shrink-0 mr-1" />
+                        <Tag className="w-4 h-4 text-gray-500 shrink-0 mr-1" />
                         {INITIAL_TAGS.map((tag) => (
                             <TagButton
                                 key={tag}

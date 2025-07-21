@@ -24,7 +24,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
     return (
         <header className={`sticky top-0 z-30 w-full h-24 flex items-center justify-between px-16 py-4 ${HEADER_BG} border-b ${HEADER_BORDER}`}> {/* px-16, py-4, h-24 for generous padding */}
-            <div className="flex items-center gap-x-16 flex-shrink-0"> {/* gap-x-16 for main section spacing */}
+            <div className="flex items-center gap-x-16 shrink-0"> {/* gap-x-16 for main section spacing */}
                 <div className="flex items-center gap-4">
                     <Button
                         id="desktop-menu-button"
@@ -63,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Right: Create + Icons */}
-            <div className="flex items-center gap-x-16 flex-shrink-0"> {/* gap-x-16 for main section spacing */}
+            <div className="flex items-center gap-x-16 shrink-0"> {/* gap-x-16 for main section spacing */}
                 <Button
                     id="header-create-button"
                     onClick={toggleFabMenu}

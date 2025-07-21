@@ -16,7 +16,7 @@ const SidebarButton = ({ icon: Icon, label, onClick, isActive, isCollapsed = fal
     `}
     title={isCollapsed ? label : undefined}
   >
-    <Icon className="w-5 h-5 flex-shrink-0" />
+    <Icon className="w-5 h-5 shrink-0" />
     {!isCollapsed && <span className="ml-3 truncate">{label}</span>}
   </button>
 );

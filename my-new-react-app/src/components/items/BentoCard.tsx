@@ -62,7 +62,7 @@ const BentoCard = ({
                 )}
             >
                 {/* Content Area */}
-                <div className="flex-grow overflow-hidden"> {/* Allow content to grow */}
+                <div className="grow overflow-hidden"> {/* Allow content to grow */}
                   {renderContent()}
                 </div>
 

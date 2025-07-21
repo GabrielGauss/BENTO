@@ -12,9 +12,9 @@ export const TagBar: React.FC<TagBarProps> = ({ tags, selectedTag, onSelectTag, 
     return (
         <div
             ref={tagBarRef}
-            className="flex-shrink-0 flex gap-2 px-4 py-2 bg-[#f4f1ed]/80 backdrop-blur-sm border-b border-gray-200 items-center overflow-x-auto whitespace-nowrap sticky top-0 z-10 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+            className="shrink-0 flex gap-2 px-4 py-2 bg-[#f4f1ed]/80 backdrop-blur-sm border-b border-gray-200 items-center overflow-x-auto whitespace-nowrap sticky top-0 z-10 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
         >
-            <TagIcon className="w-4 h-4 text-gray-500 flex-shrink-0 mr-1" />
+            <TagIcon className="w-4 h-4 text-gray-500 shrink-0 mr-1" />
             {/* Button for clearing selection, isActive prop would need adjustment if Sidebar handles overall 'Home' active state */}
              <TagButton
                 key="all"
@@ -47,9 +47,9 @@ export const TagBar: React.FC<TagBarProps> = ({ tags, selectedTag, onSelectTag, 
     return (
         <div
             ref={tagBarRef}
-            className="flex-shrink-0 flex gap-2 px-4 py-2 bg-[#f4f1ed]/80 backdrop-blur-sm border-b border-gray-200 items-center overflow-x-auto whitespace-nowrap sticky top-0 z-10 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+            className="shrink-0 flex gap-2 px-4 py-2 bg-[#f4f1ed]/80 backdrop-blur-sm border-b border-gray-200 items-center overflow-x-auto whitespace-nowrap sticky top-0 z-10 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
         >
-            <TagIcon className="w-4 h-4 text-gray-500 flex-shrink-0 mr-1" />
+            <TagIcon className="w-4 h-4 text-gray-500 shrink-0 mr-1" />
             {/* Button for clearing selection, isActive prop would need adjustment if Sidebar handles overall 'Home' active state */}
              <TagButton
                 key="all"
