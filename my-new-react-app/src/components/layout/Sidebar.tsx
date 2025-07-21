@@ -11,9 +11,9 @@ import {
     Trash2,
     Settings,
 } from "lucide-react";
-import { cn } from "@/utils/cn";
-import { ButtonComponent } from "@/components/ui/Button"; // Assuming ButtonComponent is exported
-import { SidebarButton } from "@/components/common/SidebarButton"; // Assuming SidebarButton is in common
+import { cn } from "../../utils/cn";
+import { ButtonComponent } from "../ui/Button"; // Assuming ButtonComponent is exported
+import SidebarButton from "../common/SidebarButton"; // Assuming SidebarButton is in common
 
 interface SidebarProps {
     isOpen: boolean;

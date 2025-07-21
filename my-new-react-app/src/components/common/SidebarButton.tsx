@@ -1,76 +1,24 @@
-import React from "react";
-import { cn } from "@/utils/cn";
-import { type ClassValue } from "clsx"; // Assuming ClassValue is needed for cn
-import { ButtonComponent } from "@/components/ui/Button"; // Assuming ButtonComponent is exported
-
+import * as React from "react";
 
 interface SidebarButtonProps {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    onClick?: () => void;
-    isActive?: boolean;
-    isCollapsed?: boolean;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+  isActive: boolean;
+  isCollapsed?: boolean;
 }
 
-const SidebarButton: React.FC<SidebarButtonProps> = ({
-    icon: Icon,
-    label,
-    onClick,
-    isActive,
-    isCollapsed
-}) => (
-    <ButtonComponent
-        variant="ghost"
-        onClick={onClick}
-        className={cn(
-            "w-full text-sm font-medium transition-all duration-200",
-            "text-gray-300 hover:text-white hover:bg-gray-700",
-            isActive && "bg-gray-700 text-white",
-            isCollapsed ? "justify-center px-0 h-10" : "justify-start px-3 h-9"
-        )}
-        title={isCollapsed ? label : undefined}
-    >
-        <Icon className={cn("w-4 h-4 flex-shrink-0", !isCollapsed && "mr-2")} />
-        {!isCollapsed && <span className="truncate">{label}</span>}
-    </ButtonComponent>
-);
-
-export default SidebarButton;
-import React from "react";
-import { cn } from "@/utils/cn";
-import { type ClassValue } from "clsx"; // Assuming ClassValue is needed for cn
-import { ButtonComponent } from "@/components/ui/Button"; // Assuming ButtonComponent is exported
-
-
-interface SidebarButtonProps {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    onClick?: () => void;
-    isActive?: boolean;
-    isCollapsed?: boolean;
-}
-
-const SidebarButton: React.FC<SidebarButtonProps> = ({
-    icon: Icon,
-    label,
-    onClick,
-    isActive,
-    isCollapsed
-}) => (
-    <ButtonComponent
-        variant="ghost"
-        onClick={onClick}
-        className={cn(
-            "w-full text-sm font-medium transition-all duration-200",
-            "text-gray-300 hover:text-white hover:bg-gray-700",
-            isActive && "bg-gray-700 text-white",
-            isCollapsed ? "justify-center px-0 h-10" : "justify-start px-3 h-9"
-        )}
-        title={isCollapsed ? label : undefined}
-    >
-        <Icon className={cn("w-4 h-4 flex-shrink-0", !isCollapsed && "mr-2")} />
-        {!isCollapsed && <span className="truncate">{label}</span>}
-    </ButtonComponent>
+const SidebarButton = ({ icon: Icon, label, onClick, isActive, isCollapsed = false }: SidebarButtonProps) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4'} h-10 text-sm font-medium rounded-lg transition-colors duration-200
+      ${isActive ? 'bg-gray-700 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'}
+    `}
+    title={isCollapsed ? label : undefined}
+  >
+    <Icon className="w-5 h-5 flex-shrink-0" />
+    {!isCollapsed && <span className="ml-3 truncate">{label}</span>}
+  </button>
 );
 
 export default SidebarButton;

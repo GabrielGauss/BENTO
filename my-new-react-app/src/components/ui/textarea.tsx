@@ -1,12 +1,12 @@
 import * as React from "react";
 
 // Assuming cn utility is available at '@/utils/cn'
-import { cn } from "@/utils/cn";
+import { cn } from "../../utils/cn";
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
   ({ className, ...props }, ref) => {
     return (
       <textarea
@@ -22,4 +22,4 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 );
 Textarea.displayName = "Textarea";
 
-export { Textarea };
+export default Textarea;

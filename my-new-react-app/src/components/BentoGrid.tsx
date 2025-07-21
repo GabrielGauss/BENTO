@@ -1,8 +1,8 @@
-import React, { useRef } from 'react';
-import { motion, AnimatePresence } from "framer-motion";
-import { BentoCard } from "@/components/items/BentoCard"; // Assuming BentoCard is here now
-import { cn } from "@/utils/cn"; // Corrected import for cn
-import { BentoItem } from "@/types"; // Import BentoItem interface from types
+import React from 'react';
+import { AnimatePresence } from "framer-motion";
+import BentoCard from "./items/BentoCard";
+import { cn } from "../utils/cn"; // Corrected import for cn
+import type { BentoItem } from "../types/bento"; // Import BentoItem interface from types
 
 interface BentoGridProps {
  items: BentoItem[]; // Corrected type
@@ -13,7 +13,7 @@ interface BentoGridProps {
  onShareItem: (id: string) => void;
  draggedItemId: string | null;
  setDraggedItemId: React.Dispatch<React.SetStateAction<string | null>>;
- dragItemNode: React.RefObject<HTMLDivElement>;
+ dragItemNode: React.RefObject<HTMLDivElement | null>;
  dragOverItemNode: React.MutableRefObject<HTMLDivElement | null>;
  setBentoItems: React.Dispatch<React.SetStateAction<BentoItem[]>>;
 }
@@ -107,7 +107,6 @@ const BentoGrid: React.FC<BentoGridProps> = ({ items, selectedItems, onSelectIte
  item={item}
  isSelected={selectedItems.includes(item.id)}
  onSelect={onSelectItem}
- isHovered={false} // Hover state managed internally
  onDelete={onDeleteItem}
  onStar={onStarItem}
  onShare={onShareItem}

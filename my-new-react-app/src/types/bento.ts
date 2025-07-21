@@ -6,11 +6,12 @@ interface FABItem {
     type: BentoItem['type'];
 }
 
-interface BentoItem {
-    id: string;
-    content: React.ReactNode;
-    className: string;
-    type: 'text' | 'image' | 'video' | 'audio' | 'link' | 'drawing' | 'youtube';
-    starred?: boolean;
-    url?: string;
+export interface BentoItem {
+  id: string;
+  content: React.ReactNode;
+  className?: string;
+  url?: string;
+  type: string;
+  starred?: boolean;
+  tags?: string[];
 }
