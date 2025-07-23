@@ -1,121 +1,145 @@
 import React from 'react';
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import BentoCard from "./items/BentoCard";
-import { cn } from "../utils/cn"; // Corrected import for cn
-import type { BentoItem } from "../types/bento"; // Import BentoItem interface from types
+import { cn } from "../utils/cn";
+import type { BentoItem } from "../types/bento";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import type { DragEndEvent, DragOverEvent } from '@dnd-kit/core';
+import { useMemo } from 'react';
 
 interface BentoGridProps {
- items: BentoItem[]; // Corrected type
- selectedItems: string[];
- onSelectItem: (id: string, shiftKey: boolean) => void;
- onDeleteItem: (id: string) => void;
- onStarItem: (id: string) => void;
- onShareItem: (id: string) => void;
- draggedItemId: string | null;
- setDraggedItemId: React.Dispatch<React.SetStateAction<string | null>>;
- dragItemNode: React.RefObject<HTMLDivElement | null>;
- dragOverItemNode: React.MutableRefObject<HTMLDivElement | null>;
- setBentoItems: React.Dispatch<React.SetStateAction<BentoItem[]>>;
+  items: BentoItem[];
+  selectedItems: string[];
+  onSelectItem: (id: string, shiftKey: boolean) => void;
+  onDeleteItem: (id: string) => void;
+  onStarItem: (id: string) => void;
+  onEditItem: (item: BentoItem) => void;
+  setBentoItems: React.Dispatch<React.SetStateAction<BentoItem[]>>;
+  onToggleShowTags?: (id: string) => void;
+  onTogglePrivate?: (id: string) => void;
 }
 
-const BentoGrid: React.FC<BentoGridProps> = ({ items, selectedItems, onSelectItem, onDeleteItem, onStarItem, onShareItem, draggedItemId, setDraggedItemId, dragItemNode, dragOverItemNode, setBentoItems }) => {
- // Removed state and refs related to drag and drop, they are now passed as props
-
-    // --- Drag and Drop Handlers ---
-
-    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
- // console.log('Drag Start:', id);
- setDraggedItemId(id);
- dragItemNode.current = e.currentTarget; // Store the node being dragged
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', id); // Set data for transfer
-        // Add dragging style class immediately
-        e.currentTarget.classList.add('opacity-50', 'scale-95', 'cursor-grabbing');
-    };
-
-    const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, targetId: string) => {
- // console.log('Drag Enter:', targetId);
- if (!draggedItemId || !dragItemNode.current || dragItemNode.current === e.currentTarget) {
- return; // Don't process if not dragging or entering the same item
-        }
- // console.log(`Dragging ${draggedItemId} over ${targetId}`);
- dragOverItemNode.current = e.currentTarget; // Store the node being dragged over
-
- // Only reorder if the dragged item is different from the target item
- if (draggedItemId !== targetId) {
-            setBentoItems(prevItems => {
- // Find indices in the *current* state array
- const draggedIndex = prevItems.findIndex(item => item.id === draggedItemId);
- const targetIndex = prevItems.findIndex(item => item.id === targetId);
-
- // Ensure both items are found
- if (draggedIndex === -1 || targetIndex === -1) {
- console.warn("Dragged or target item not found in state array");
- return prevItems; // Should not happen if state is consistent
-                }
-
- // Create a new array and perform the swap
- const newItems = [...prevItems];
- const [draggedItem] = newItems.splice(draggedIndex, 1); // Remove dragged item
- newItems.splice(targetIndex, 0, draggedItem); // Insert dragged item at target index
-
- return newItems;
-            });
-        }
-    };
-
-    const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
- // console.log('Drag End');
- // Remove dragging styles from the original item
- if (dragItemNode.current) {
-            dragItemNode.current.classList.remove('opacity-50', 'scale-95', 'cursor-grabbing');
-        }
- // Clear refs and state
- setDraggedItemId(null);
- dragItemNode.current = null;
- dragOverItemNode.current = null;
-    };
-
- // Add onDragOver to the grid container to allow dropping
- const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
- e.preventDefault(); // Necessary to allow dropping
- e.dataTransfer.dropEffect = 'move'; // Indicate it's a move operation
-    }
-
+function SortableBentoCard({ item, selectedItems, onSelectItem, onDeleteItem, onStarItem, onEditItem, onToggleShowTags, onTogglePrivate }: {
+  item: BentoItem;
+  selectedItems: string[];
+  onSelectItem: (id: string, shiftKey: boolean) => void;
+  onDeleteItem: (id: string) => void;
+  onStarItem: (id: string) => void;
+  onEditItem: (item: BentoItem) => void;
+  onToggleShowTags?: (id: string) => void;
+  onTogglePrivate?: (id: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  // Analog scrapbook feel: random rotation/offset only when not dragging
+  const rotation = useMemo(() => (Math.random() - 0.5) * 4, [item.id]);
+  const offsetX = useMemo(() => (Math.random() - 0.5) * 8, [item.id]);
+  const offsetY = useMemo(() => (Math.random() - 0.5) * 8, [item.id]);
+  const style = isDragging
+    ? {
+        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+        transition,
+      }
+    : {
+        transform: `rotate(${rotation}deg) translate(${offsetX}px, ${offsetY}px)`,
+        transition,
+      };
   return (
-    <div
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4 md:p-6"
-            onDragOver={handleDragOver} // Add DragOver handler to the container
- >
- {/* AnimatePresence for add/delete animations */}
- <AnimatePresence>
- {items.map((item) => (
- <div
- key={item.id}
- draggable // Make the outer div draggable
- onDragStart={(e) => handleDragStart(e, item.id)}
- onDragEnter={(e) => handleDragEnter(e, item.id)}
- onDragEnd={handleDragEnd}
- // No onDragOver needed on individual items when container handles it
- className={cn(
- "transition-opacity duration-300",
- // Apply dragging styles dynamically based on state
- draggedItemId === item.id ? 'opacity-50 scale-95 cursor-grabbing' : 'cursor-grab'
- )}
- >
- <BentoCard
- item={item}
- isSelected={selectedItems.includes(item.id)}
- onSelect={onSelectItem}
- onDelete={onDeleteItem}
- onStar={onStarItem}
- onShare={onShareItem}
- />
- </div>
- ))}
- </AnimatePresence>
- </div>
+    <motion.div
+      layout
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'transition-opacity duration-300',
+        isDragging ? 'z-30 shadow-2xl ring-2 ring-blue-400 cursor-grabbing' : 'cursor-grab'
+      )}
+      {...attributes}
+      {...listeners}
+    >
+      <BentoCard
+        item={item}
+        isSelected={selectedItems.includes(item.id)}
+        onSelect={onSelectItem}
+        onDelete={onDeleteItem}
+        onStar={onStarItem}
+        onEdit={onEditItem}
+        rotation={rotation}
+        onToggleShowTags={onToggleShowTags}
+        onTogglePrivate={onTogglePrivate}
+      />
+    </motion.div>
   );
 }
+
+const BentoGrid: React.FC<BentoGridProps> = ({ items, selectedItems, onSelectItem, onDeleteItem, onStarItem, onEditItem, onShareItem, setBentoItems }) => {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
+
+  function handleToggleTagVisible(id: string) {
+    setBentoItems(items => items.map(item =>
+      item.id === id ? { ...item, tagVisible: item.tagVisible === false ? true : false } : item
+    ));
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (active && over && active.id !== over.id) {
+      const oldIndex = items.findIndex(item => item.id === active.id);
+      const newIndex = items.findIndex(item => item.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        setBentoItems(arrayMove(items, oldIndex, newIndex));
+      }
+    }
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    const { active, over } = event;
+    if (active && over && active.id !== over.id) {
+      const oldIndex = items.findIndex(item => item.id === active.id);
+      const newIndex = items.findIndex(item => item.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        setBentoItems(arrayMove(items, oldIndex, newIndex));
+      }
+    }
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragOver={handleDragOver}>
+      <SortableContext items={items.map(item => item.id)} strategy={rectSortingStrategy}>
+        <motion.div
+          layout
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-2 gap-y-1 auto-rows-min items-start w-full h-full min-h-screen overflow-visible bg-white bg-[radial-gradient(circle,#e2e8f0_1px,transparent_1px)] bg-[length:30px_30px] px-4 py-6"
+        >
+          <AnimatePresence>
+            {items.map((item) => (
+              <SortableBentoCard
+                key={item.id}
+                item={item}
+                selectedItems={selectedItems}
+                onSelectItem={onSelectItem}
+                onDeleteItem={onDeleteItem}
+                onStarItem={onStarItem}
+                onEditItem={onEditItem}
+                onToggleShowTags={handleToggleTagVisible}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      </SortableContext>
+    </DndContext>
+  );
+};
 
 export default BentoGrid;

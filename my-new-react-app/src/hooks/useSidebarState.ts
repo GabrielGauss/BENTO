@@ -6,11 +6,14 @@ export const useSidebarState = () => {
 
     // Toggle mobile sidebar visibility
     const toggleMobileSidebar = () => setSidebarOpen(!sidebarOpen);
+    // Toggle desktop sidebar collapse
+    const toggleSidebarCollapse = () => setIsSidebarCollapsed((prev) => !prev);
 
     return {
         sidebarOpen,
         isSidebarCollapsed,
         toggleMobileSidebar,
+        toggleSidebarCollapse,
     };
 };
 

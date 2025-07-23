@@ -1,163 +1,126 @@
 import React, { useState } from "react";
 
 // Import icons
-import {
-    Home,
-    Clock,
-    Star,
-    Folder,
-    Share2,
-    FileText,
-    FolderPlus,
-    Trash2,
-    Settings,
-    ThumbsUp,
-} from "lucide-react";
-
-// Import components
-import SidebarButton from "../components/common/SidebarButton";
-import CreateBentoModal from "../components/modals/CreateBentoModal";
+import CreateEditBentoModal from "../components/modals/CreateBentoModal";
 import type { BentoItem } from "../types/bento";
 import useMultiSelect from "../hooks/useMultiSelect";
-import useCreateBento from "../hooks/useCreateBento";
 import useFilteredItems from "../hooks/useFilteredItems";
 import Header from "../components/layout/Header";
+import useSidebarState from "../hooks/useSidebarState";
+import Sidebar from "../components/layout/Sidebar";
+import BentoGrid from "../components/BentoGrid"; // Added import for BentoGrid
+import Fab from "../components/ui/Fab";
+import useFabMenuState from "../hooks/useFabMenuState";
+import { Send, Sparkles, SlidersHorizontal } from "lucide-react";
+import useBentoGrid from "../hooks/useBentoGrid";
+import { TagBar } from "../components/layout/TagBar";
 // ===============================
 // Types & Interfaces
 // ===============================
 
+// Use FABItem type for handleCreateBento
 interface FABItem {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    type: BentoItem['type'];
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  type: string;
 }
 
 // ===============================
 // Constants
 // ===============================
 
-const INITIAL_TAGS = ["Inspo", "Work", "Play", "Quotes", "Ideas", "Travel", "Recipes", "Links"];
-
-// Example initial items with more structure
-// Replace with actual data fetching later
 const INITIAL_BENTO_ITEMS: BentoItem[] = [
-    {
-        id: '1',
-        content: "Don’t forget meeting at 3 PM",
-        className: "bg-yellow-100",
-        type: 'text',
-        starred: false
-    },
-    {
-        id: '2',
-        content: (
-            <>
-                <strong className="block mb-1">Morning Dump</strong>
-                <ul className="list-disc list-inside text-xs text-gray-700 space-y-1">
-                    <li>Feeling kinda blah</li>
-                    <li>Need to get some fresh air</li>
-                    <li>Work on project</li>
-                </ul>
-            </>
-        ),
-        className: "bg-pink-100",
-        type: 'text',
-        starred: false
-    },
-    {
-        id: '3',
-        content: (
-            <>
-                Suggestions<br />
-                <span className="text-xs text-gray-600">Add to your journal?</span>
-            </>
-        ),
-        className: "bg-orange-100",
-        type: 'text',
-        starred: false
-    },
-    {
-        id: '4',
-        content: (
-            <>
-                {/* Use a placeholder service */}
-                <img
-                    src="https://placehold.co/200x300/E0E0E0/BDBDBD?text=Image"
-                    alt="Placeholder image"
-                    className="w-full h-32 object-cover rounded-t-lg"
-                    // Add error handling for real images
-                    onError={(e) => (e.currentTarget.src = 'https://placehold.co/200x300/CCCCCC/999999?text=Error')}
-                />
-                <div className="text-center text-xs py-2 font-medium">Today</div>
-            </>
-        ),
-        url: "https://placehold.co/200x300", // Store original URL if needed
-        className: "bg-white overflow-hidden",
-        type: 'image',
-        starred: false
-    },
-    {
-        id: '5',
-        content: (
-            <>
-                <strong className="block mb-1">Project Brainstorm</strong>
-                <ul className="list-disc list-inside text-xs text-gray-700 space-y-1">
-                    <li>Initial Ideas</li>
-                    <li>Research</li>
-                    <li>Sketches</li>
-                </ul>
-            </>
-        ),
-        className: "bg-blue-100",
-        type: 'text',
-        starred: false
-    },
-    {
-        id: '6',
-        content: (
-            <iframe
-                width="100%"
-                height="200"
-                // Use a valid embed URL structure, replace VIDEO_ID
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ" // Example: Rick Astley
-                title="YouTube Video Player"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="rounded-lg block" // Add block display
-            />
-        ),
-        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // Store original watch URL
-        className: "bg-gray-900 p-1 rounded-lg", // Darker background for video
-        type: 'youtube',
-        starred: false
-    },
-    {
-        id: '7',
-        content: (
-            <a href="https://react.dev" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">
-                React Documentation
-            </a>
-        ),
-        url: "https://react.dev",
-        className: "bg-green-100 p-4 rounded-lg",
-        type: 'link',
-        starred: false
-    },
-    {
-        id: '8',
-        content: (
-            <audio controls className="w-full h-10"> {/* Added height */}
-                {/* Provide a valid audio source */}
-                <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
-                Your browser does not support the audio element.
-            </audio>
-        ),
-        url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        className: "bg-purple-100 p-2 rounded-lg",
-        type: 'audio',
-        starred: false
-    },
-];
+  {
+    id: '1',
+    content: "This is a quick note. Welcome to your Bento Desk!",
+    title: "Quick Note",
+    className: "bg-yellow-100",
+    type: 'text',
+    starred: false,
+    color: '#fffbe6',
+    scale: 1.2,
+  },
+  {
+    id: '2',
+    content: (
+      <div className="w-full aspect-[4/3] bg-white rounded-t-lg overflow-hidden flex flex-col items-center justify-center">
+        <img
+          src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80"
+          alt="Sunset Polaroid"
+          className="object-cover w-full h-full"
+        />
+        <div className="text-center text-xs py-2 font-medium">Polaroid Sunset</div>
+      </div>
+    ),
+    title: "Polaroid Sunset",
+    url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
+    className: "bg-white overflow-hidden",
+    type: 'image',
+    starred: false,
+    color: '#ffe6f7',
+    scale: 1.7,
+  },
+  {
+    id: '3',
+    content: (
+      <div className="w-full h-16 flex items-center justify-center">
+        <audio controls className="w-full h-10">
+          <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+    ),
+    title: "Chill Audio Track",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    className: "bg-purple-100 p-2 rounded-lg",
+    type: 'audio',
+    starred: false,
+    color: '#f3e6ff',
+    scale: 1.2,
+  },
+  {
+    id: '4',
+    content: (
+      <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+        <iframe
+          src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+          title="YouTube Video Player"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="absolute top-0 left-0 w-full h-full"
+        />
+      </div>
+    ),
+    title: "YouTube: Rick Astley",
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    className: "bg-gray-900 p-1 rounded-lg",
+    type: 'youtube',
+    starred: false,
+    color: '#e6f7ff',
+    scale: 1.7,
+  },
+  {
+    id: '5',
+    content: (
+      <div className="flex items-center gap-3">
+        <img src="https://kiwix.org/wp-content/uploads/2018/07/cropped-kiwix_logo-1-192x192.png" alt="Kiwix Logo" className="w-8 h-8 rounded" />
+        <div>
+          <a href="https://kiwix.org/es/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all font-semibold">
+            Cognitive Freedom (Preview)
+          </a>
+          <div className="text-xs text-gray-500">kiwix.org</div>
+        </div>
+      </div>
+    ),
+    title: "Cognitive Freedom",
+    url: "https://kiwix.org/es/",
+    className: "bg-green-100 p-4 rounded-lg",
+    type: 'link',
+    starred: false,
+    color: '#e6ffe6',
+    scale: 1.2,
+  },
+];  
 
 // ===============================
 // Main Component
@@ -170,7 +133,12 @@ const BentoPage = () => {
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
     const [bentoItems, setBentoItems] = useState<BentoItem[]>(INITIAL_BENTO_ITEMS);
     const [searchTerm, setSearchTerm] = useState('');
-    const { isCreating, newBentoType, newBentoContent, newBentoUrl, cancelCreateBento, addBentoItem, setNewBentoContent, setNewBentoUrl } = useCreateBento(bentoItems, setBentoItems, () => {});
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [showTidyModal, setShowTidyModal] = useState(false);
+    const [showMoreOptionsModal, setShowMoreOptionsModal] = useState(false);
+    // Add state for board name and date
+    const [boardName, setBoardName] = useState('My Bento Board');
+    const [editingBoardName, setEditingBoardName] = useState(false);
 
     // ===============================
     // Handlers
@@ -187,15 +155,128 @@ const BentoPage = () => {
     // Use the multi-select hook
     const { clearSelection } = useMultiSelect(bentoItems);
 
+    // Multi-select and drag-and-drop logic
+    const {
+      selectedItems,
+      handleSelectItem,
+      setBentoItems: setBentoGridItems,
+    } = useBentoGrid(bentoItems, setBentoItems);
+
+    // Item action handlers
+    const handleDeleteItem = (id: string) => setBentoItems(items => items.filter(item => item.id !== id));
+    const handleToggleFavorite = (id: string) => setBentoItems(items => items.map(item => item.id === id ? { ...item, starred: !item.starred } : item));
+    const handleEditItem = (item: BentoItem) => {
+      setEditingItem(item);
+      setShowModal(true);
+    };
+    const handleToggleShowTags = (id: string) => {
+      setBentoItems(items => items.map(item => item.id === id ? { ...item, showTags: item.showTags === false ? true : false } : item));
+    };
+    const handleTogglePrivate = (id: string) => {
+      setBentoItems(items => items.map(item => item.id === id ? { ...item, private: !item.private } : item));
+    };
+
     // ===============================
     // Filtered Items
     // ===============================
-    const filteredItems = useFilteredItems(bentoItems, searchTerm, selectedTag);
+    // Filtered items (no tagVisible logic)
+    const filteredItems = useFilteredItems(
+      bentoItems,
+      searchTerm,
+      selectedTag
+    );
 
-    // Add dummy handlers for sidebar/fab toggles for now
-    const toggleMobileSidebar = () => {};
-    const toggleSidebarCollapse = () => {};
-    const toggleFabMenu = () => {};
+    // Tag management state
+    const [tags, setTags] = useState<string[]>(() => {
+      // Initialize from items
+      return Array.from(
+        new Set(
+          bentoItems
+            .filter(item => item.tagVisible !== false && Array.isArray(item.tags))
+            .flatMap(item => item.tags || [])
+        )
+      );
+    });
+
+    // Tag management handlers
+    const handleCreateTag = (newTag: string) => {
+      console.log('Create tag:', newTag);
+      if (!tags.includes(newTag)) {
+        setTags(prev => [...prev, newTag]);
+        setSelectedTag(newTag);
+      }
+    };
+    const handleEditTag = (newTag: string) => {
+      console.log('Edit tag:', selectedTag, '->', newTag);
+      if (!selectedTag) return;
+      if (tags.includes(newTag)) return;
+      setTags(prev => prev.map(t => t === selectedTag ? newTag : t));
+      setBentoItems(items => items.map(item =>
+        item.tags && item.tags.includes(selectedTag)
+          ? { ...item, tags: item.tags.map(t => t === selectedTag ? newTag : t) }
+          : item
+      ));
+      setSelectedTag(newTag);
+    };
+    const handleDeleteTag = (tagToDelete: string) => {
+      console.log('Delete tag:', tagToDelete);
+      setTags(prev => prev.filter(t => t !== tagToDelete));
+      setBentoItems(items => items.map(item =>
+        item.tags && item.tags.includes(tagToDelete)
+          ? { ...item, tags: item.tags.filter(t => t !== tagToDelete) }
+          : item
+      ));
+      if (selectedTag === tagToDelete) setSelectedTag(null);
+    };
+
+    // Sidebar state
+    const { sidebarOpen, isSidebarCollapsed, toggleMobileSidebar, toggleSidebarCollapse } = useSidebarState();
+    const { fabOpen, toggleFabMenu } = useFabMenuState();
+
+    // FAB create logic
+    const [showModal, setShowModal] = useState(false);
+    const [editingItem, setEditingItem] = useState<BentoItem | null>(null);
+    const [defaultType, setDefaultType] = useState<string>('text');
+    // Remove fabType
+    // Fix handleCreateBento to reliably open modal for correct type
+    const handleCreateBento = (item: FABItem) => {
+      setEditingItem(null);
+      setDefaultType(item.type);
+      setShowModal(true);
+      if (fabOpen) toggleFabMenu();
+    };
+    const handleSaveBento = (item: Partial<BentoItem>, editingId?: string) => {
+      console.log('Save bento:', item, editingId);
+      if (editingId) {
+        // Edit existing
+        setBentoItems(items => {
+          const updated = items.map(b => b.id === editingId ? { ...b, ...item, id: editingId } : b);
+          setTags(deriveTagsFromItems(updated));
+          return updated;
+        });
+      } else {
+        // Create new
+        setBentoItems(items => {
+          const newItems = [
+            {
+              ...item,
+              id: Date.now().toString(),
+            } as BentoItem,
+            ...items
+          ];
+          setTags(deriveTagsFromItems(newItems));
+          return newItems;
+        });
+      }
+      setShowModal(false);
+      setEditingItem(null);
+      // setFabType(null); // Removed as per edit hint
+    };
+
+    // Helper to derive tags from all cards
+    function deriveTagsFromItems(items: BentoItem[]): string[] {
+      return Array.from(new Set(items.flatMap(item => item.tags || [])));
+    }
 
     // Render
     // ===============================
@@ -206,74 +287,136 @@ const BentoPage = () => {
     <Header
       toggleMobileSidebar={toggleMobileSidebar}
       toggleSidebarCollapse={toggleSidebarCollapse}
-      toggleFabMenu={toggleFabMenu}
       searchTerm={searchTerm}
       setSearchTerm={setSearchTerm}
+      // Remove onShare, onTidy, onMoreOptions
     />
     {/* Main area: sidebar + content */}
     <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
-      <aside className="w-64 h-full bg-gray-900 text-white shrink-0 flex flex-col shadow-lg p-4">
-        {/* Sidebar content */}
-        <div className="space-y-2">
-          <SidebarButton icon={Home} label="Home" isActive={!selectedTag} onClick={clearTag} />
-          <SidebarButton icon={Star} label="Favorites" isActive={false} onClick={() => {}} />
-          <SidebarButton icon={Folder} label="Collections" isActive={false} onClick={() => {}} />
-          <SidebarButton icon={Share2} label="Shared with me" isActive={false} onClick={() => {}} />
-        </div>
-        <div className="border-t border-gray-700 my-4" />
-        <div className="space-y-2">
-          <SidebarButton icon={FileText} label="My Bentos" isActive={false} onClick={() => {}} />
-          <SidebarButton icon={FolderPlus} label="Drafts" isActive={false} onClick={() => {}} />
-          <SidebarButton icon={Clock} label="Recently Opened" isActive={false} onClick={() => {}} />
-          <SidebarButton icon={ThumbsUp} label="Liked Items" isActive={false} onClick={() => {}} />
-          <SidebarButton icon={Trash2} label="Trash" isActive={false} onClick={() => {}} />
-        </div>
-        <div className="border-t border-gray-700 my-4" />
-        <SidebarButton icon={Settings} label="Settings" isActive={false} onClick={() => {}} />
-      </aside>
+      <Sidebar
+        isOpen={sidebarOpen}
+        isCollapsed={isSidebarCollapsed}
+        selectedTag={selectedTag}
+        clearTag={clearTag}
+      />
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-y-auto">
-        {/* Tag Bar */}
-        <div className="sticky top-14 w-full bg-[#fcf9f6]/80 border-b border-gray-200 px-4 py-2 z-20 flex gap-2 overflow-x-auto whitespace-nowrap">
-          {INITIAL_TAGS.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => selectTag(tag)}
-              className={`px-4 py-1 rounded-full text-sm font-medium border transition
-                ${selectedTag === tag ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}
-            >
-              #{tag}
-            </button>
-          ))}
-        </div>
-
-        {/* Bento Grid */}
-        <div className="flex-1 w-full px-4 py-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className={`rounded-xl border shadow p-6 transition-transform duration-200 hover:shadow-lg hover:scale-105 cursor-pointer ${item.className || 'bg-white'}`}
-                // TODO: Add selection/hover menu in the future
+      <main className="flex-1 overflow-y-auto relative bg-[#fdf8f4]">
+        {/* Board Title Tab and TagBar in a single seamless row */}
+        <div className="w-full px-4 flex items-center" style={{ height: '3.25rem', background: 'white', backgroundImage: 'radial-gradient(circle,#e2e8f0_1px,transparent_1px)', backgroundSize: '30px 30px' }}>
+          <div className="flex items-center gap-2 w-1/4 h-full bg-transparent rounded-tr-2xl pl-4">
+            {editingBoardName ? (
+              <input
+                className="text-xl font-bold bg-transparent border-b border-gray-300 focus:border-blue-400 outline-none px-1 py-0.5 min-w-[120px]"
+                value={boardName}
+                onChange={e => setBoardName(e.target.value)}
+                onBlur={() => setEditingBoardName(false)}
+                onKeyDown={e => { if (e.key === 'Enter') setEditingBoardName(false); }}
+                autoFocus
+              />
+            ) : (
+              <span
+                className="text-xl font-bold cursor-pointer hover:underline"
+                onClick={() => setEditingBoardName(true)}
+                title="Click to edit board name"
               >
-                {typeof item.content === 'string' ? <div>{item.content}</div> : item.content}
-              </div>
-            ))}
+                {boardName}
+              </span>
+            )}
+            {/* Board action icons with Lucide icons and modal logic */}
+            <button
+              className="relative p-1 rounded-full hover:bg-[#ffe9c7] focus:bg-[#ffe9c7] transition transform hover:scale-110 focus:scale-110 group"
+              aria-label="Share this board"
+              onClick={() => setShowShareModal(true)}
+            >
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none z-20">Share</span>
+              <Send className="w-5 h-5 text-gray-600" aria-hidden="true" />
+            </button>
+            <button
+              className="relative p-1 rounded-full hover:bg-[#e7f6ff] focus:bg-[#e7f6ff] transition transform hover:scale-110 focus:scale-110 group"
+              aria-label="Tidy up board"
+              onClick={() => setShowTidyModal(true)}
+            >
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none z-20">Tidy</span>
+              <Sparkles className="w-5 h-5 text-gray-600" aria-hidden="true" />
+            </button>
+            <button
+              className="relative p-1 rounded-full hover:bg-[#f3e8ff] focus:bg-[#f3e8ff] transition transform hover:scale-110 focus:scale-110 group"
+              aria-label="Board options"
+              onClick={() => setShowMoreOptionsModal(true)}
+            >
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none z-50">Options</span>
+              <SlidersHorizontal className="w-5 h-5 text-gray-600" aria-hidden="true" />
+            </button>
+          </div>
+          {/* TagBar next to title tab, visible, flex-1, full bar style */}
+          <div className="flex-1 h-full flex items-center px-4 py-2" style={{ background: 'white', backgroundImage: 'radial-gradient(circle,#e2e8f0_1px,transparent_1px)', backgroundSize: '30px 30px' }}>
+            <TagBar
+              tags={tags}
+              selectedTag={selectedTag}
+              onSelectTag={selectTag}
+              onClearTag={clearTag}
+              onCreateTag={handleCreateTag}
+              onEditTag={handleEditTag}
+              onDeleteTag={handleDeleteTag}
+            />
           </div>
         </div>
-
-        {/* Create New Bento Item Modal */}
-        <CreateBentoModal
-          isOpen={isCreating && !!newBentoType}
-          onCancel={cancelCreateBento}
-          bentoType={newBentoType as FABItem | null}
-          content={newBentoContent}
-          url={newBentoUrl}
-          onContentChange={e => setNewBentoContent(e.target.value)}
-          onUrlChange={e => setNewBentoUrl(e.target.value)}
-          onAddItem={addBentoItem}
+        {/* Bento Grid */}
+        <BentoGrid
+          items={filteredItems}
+          selectedItems={selectedItems}
+          onSelectItem={handleSelectItem}
+          onDeleteItem={handleDeleteItem}
+          onStarItem={handleToggleFavorite}
+          onEditItem={handleEditItem}
+          setBentoItems={setBentoGridItems}
+          onToggleShowTags={handleToggleShowTags}
+          onTogglePrivate={handleTogglePrivate}
         />
+        {/* Create/Edit Bento Item Modal */}
+        <CreateEditBentoModal
+          isOpen={showModal}
+          editingItem={editingItem}
+          onSave={handleSaveBento}
+          onCancel={() => { setShowModal(false); setEditingItem(null); }}
+          defaultType={defaultType}
+          existingTags={tags}
+        />
+        {/* FAB Floating Action Button */}
+        <Fab
+          fabOpen={fabOpen}
+          toggleFabMenu={toggleFabMenu}
+          handleCreateBento={handleCreateBento}
+        />
+        {/* Board-level Modals */}
+        {showShareModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 min-w-[320px] flex flex-col gap-4">
+              <div className="font-bold text-lg mb-2">Share this Board</div>
+              <div className="text-gray-600 mb-4">Invite collaborators or share your desk with a link. (Coming soon!)</div>
+              <button className="self-end px-4 py-2 bg-black text-white rounded-lg" onClick={() => setShowShareModal(false)}>Close</button>
+            </div>
+          </div>
+        )}
+        {showTidyModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 min-w-[320px] flex flex-col gap-4">
+              <div className="font-bold text-lg mb-2">Tidy Up Board</div>
+              <div className="text-gray-600 mb-4">Auto-arrange or stack your cards for a cleaner desk. (Coming soon!)</div>
+              <button className="self-end px-4 py-2 bg-black text-white rounded-lg" onClick={() => setShowTidyModal(false)}>Close</button>
+            </div>
+          </div>
+        )}
+        {showMoreOptionsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 min-w-[320px] flex flex-col gap-4">
+              <div className="font-bold text-lg mb-2">Board Options</div>
+              <div className="text-gray-600 mb-4">Rename board, change desk surface, archive, and more. (Coming soon!)</div>
+              <button className="self-end px-4 py-2 bg-black text-white rounded-lg" onClick={() => setShowMoreOptionsModal(false)}>Close</button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   </div>

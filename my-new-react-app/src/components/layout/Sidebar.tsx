@@ -4,7 +4,6 @@ import {
     Star,
     Folder,
     Share2,
-    FileText,
     FolderPlus,
     Clock,
     ThumbsUp,
@@ -12,15 +11,15 @@ import {
     Settings,
 } from "lucide-react";
 import { cn } from "../../utils/cn";
-import { ButtonComponent } from "../ui/Button"; // Assuming ButtonComponent is exported
-import SidebarButton from "../common/SidebarButton"; // Assuming SidebarButton is in common
+import SidebarButton from "../common/SidebarButton";
 
 interface SidebarProps {
     isOpen: boolean;
-    isCollapsed: boolean; // Added isCollapsed prop
-    selectedTag: string | null; // Assuming tag selection affects sidebar
-    clearTag: () => void; // Assuming clear tag affects sidebar
-    // Add other prop types for navigation handlers if needed
+    isCollapsed: boolean;
+    selectedTag: string | null;
+    clearTag: () => void;
+    className?: string;
+    onNavigate?: (destination: string) => void; // Optional navigation handler
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -28,61 +27,113 @@ const Sidebar: React.FC<SidebarProps> = ({
     isCollapsed,
     selectedTag,
     clearTag,
+    onNavigate = () => {},
 }) => {
-    // Use useEffect here if you need to handle closing on mobile resize or similar effects
+    // Define sidebar sections with their items
+    const sidebarSections = [
+        {
+            items: [
+                {
+                    icon: Home,
+                    label: "Home",
+                    isActive: !selectedTag,
+                    onClick: clearTag,
+                },
+                {
+                    icon: Star,
+                    label: "Favorites",
+                    onClick: () => onNavigate("favorites"),
+                },
+                {
+                    icon: Folder,
+                    label: "Collections",
+                    onClick: () => onNavigate("collections"),
+                },
+                {
+                    icon: Share2,
+                    label: "Shared with me",
+                    onClick: () => onNavigate("shared"),
+                },
+            ],
+        },
+        {
+            items: [
+                {
+                    icon: Clock,
+                    label: "Recently Opened",
+                    onClick: () => onNavigate("recent"),
+                },
+                {
+                    icon: FolderPlus,
+                    label: "Drafts",
+                    onClick: () => onNavigate("drafts"),
+                },
+                {
+                    icon: ThumbsUp,
+                    label: "Liked Items",
+                    onClick: () => onNavigate("liked"),
+                },
+                {
+                    icon: Trash2,
+                    label: "Trash",
+                    onClick: () => onNavigate("trash"),
+                },
+            ],
+        },
+        {
+            items: [
+                {
+                    icon: Settings,
+                    label: "Settings",
+                    onClick: () => onNavigate("settings"),
+                },
+            ],
+        },
+    ];
 
     return (
         <aside
             id="sidebar"
             className={cn(
-                "bg-black border-r border-gray-700 shadow-md z-20 shrink-0",
-                "transition-all duration-300 ease-in-out", // Use transition-all for width and transform
-                // Mobile State (Overlay)
-                "fixed md:static top-14 bottom-0", // Fixed on mobile, static on desktop
-                isOpen ? "translate-x-0" : "-translate-x-full", // Mobile slide in/out
-                // Desktop State (Collapse)
-                "md:translate-x-0", // Ensure visible on desktop
-                isCollapsed ? "md:w-16" : "md:w-60" // Desktop collapse width
+                "bg-[#23272f] border-r border-gray-700 shadow-lg z-20 shrink-0 rounded-r-2xl font-[Inter,sans-serif]",
+                "transition-all duration-300 ease-in-out",
+                "fixed md:static top-14 bottom-0",
+                isOpen ? "translate-x-0" : "-translate-x-full",
+                "md:translate-x-0",
+                isCollapsed ? "md:w-16" : "md:w-60"
             )}
+            aria-label="Main navigation"
         >
-            {/* Sidebar Content */}
-            <div className="h-full overflow-y-auto overflow-x-hidden pb-4">
-                {" "}
-                {/* Hide horizontal overflow */}
-                {/* Pass collapsed state to buttons */}
-                <div className="p-3 space-y-1">
-                    <SidebarButton
-                        icon={Home}
-                        label="Home"
-                        isActive={!selectedTag} // Simplified active state logic
-                        onClick={clearTag}
-                        isCollapsed={isCollapsed}
-                    />
-                    <SidebarButton icon={Star} label="Favorites" isCollapsed={isCollapsed} />
-                    <SidebarButton icon={Folder} label="Collections" isCollapsed={isCollapsed} />
-                    <SidebarButton icon={Share2} label="Shared with me" isCollapsed={isCollapsed} />
-                </div>
-                <hr
-                    className={cn("my-2 border-gray-700", isCollapsed ? "mx-1" : "mx-3")}
-                />{" "}
-                {/* Adjust HR margin */}icons Clock for "Recently Opened", ThumbsUp for "Liked Items", Trash2 for "Trash", and Settings for "Settings".
-                <div className="p-3 space-y-1">
-                    <SidebarButton icon={Clock} label="Recently Opened" isCollapsed={isCollapsed} />
-                    <SidebarButton icon={FolderPlus} label="Drafts" isCollapsed={isCollapsed} />
-                    <SidebarButton icon={Clock} label="Recently Opened" isCollapsed={isCollapsed} />
-                    <SidebarButton icon={ThumbsUp} label="Liked Items" isCollapsed={isCollapsed} />
-                    <SidebarButton icon={Trash2} label="Trash" isCollapsed={isCollapsed} />
-                </div>
-                <hr
-                    className={cn("my-2 border-gray-700", isCollapsed ? "mx-1" : "mx-3")}
-                />{" "}
-                {/* Adjust HR margin */}
-                <div className="p-3 space-y-1">
-                    <SidebarButton icon={Settings} label="Settings" isCollapsed={isCollapsed} />
-                </div>
-            </div>
+            <nav className="h-full overflow-y-auto overflow-x-hidden pb-4">
+                {sidebarSections.map((section, sectionIndex) => (
+                    <React.Fragment key={`section-${sectionIndex}`}>
+                        <div className="p-3 space-y-1">
+                            {section.items.map((item) => (
+                                <SidebarButton
+                                    key={item.label}
+                                    icon={item.icon}
+                                    label={item.label}
+                                    isActive={!!item.isActive}
+                                    onClick={item.onClick}
+                                    isCollapsed={isCollapsed}
+                                    aria-current={item.isActive ? "page" : undefined}
+                                />
+                            ))}
+                        </div>
+                        {sectionIndex < sidebarSections.length - 1 && (
+                            <hr
+                                className={cn(
+                                    "my-2 border-gray-700",
+                                    isCollapsed ? "mx-1" : "mx-3"
+                                )}
+                                aria-hidden="true"
+                            />
+                        )}
+                    </React.Fragment>
+                ))}
+            </nav>
         </aside>
     );
 };
 
-export default Sidebar;
+export default React.memo(Sidebar);
