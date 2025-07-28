@@ -1,21 +1,21 @@
 import React from "react";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
-import { Menu, Search, Bell, User, MoreVertical, Send, Sparkles, SlidersHorizontal } from "lucide-react";
+import { Menu, Search, Bell, User, MoreVertical } from "lucide-react";
 
 interface HeaderProps {
     toggleMobileSidebar: () => void;
-    toggleSidebarCollapse: () => void;
     searchTerm: string;
     setSearchTerm: (term: string) => void;
+    onCreateBento?: () => void;
     className?: string;
 }
 
 const Header: React.FC<HeaderProps> = ({
     toggleMobileSidebar,
-    toggleSidebarCollapse,
     searchTerm,
     setSearchTerm,
+    onCreateBento,
     className = "",
 }) => {
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,30 +27,20 @@ const Header: React.FC<HeaderProps> = ({
             className={`w-full h-14 flex items-center justify-between px-4 bg-[#fcf9f6]/95 backdrop-blur-sm border-b border-gray-200 shadow-md z-30 ${className}`}
             role="banner"
         >
-            {/* Left Section: Menu Toggles and Logo */}
-            <div className="flex items-center gap-2">
-                {/* Desktop Menu Button - Toggles Collapse */}
+            {/* Left Section: Menu and Board Name */}
+            <div className="flex items-center gap-4">
+                {/* Hamburger Menu Button - Controls Sidebar */}
                 <Button
-                    id="desktop-menu-button"
-                    size="icon"
                     variant="ghost"
-                    onClick={toggleSidebarCollapse}
-                    className="hidden md:inline-flex text-gray-600 hover:bg-gray-200"
-                    aria-label="Toggle sidebar collapse"
-                >
-                    <Menu className="w-5 h-5" aria-hidden="true" />
-                </Button>
-                {/* Mobile Menu Button - Toggles Overlay */}
-                <Button
-                    id="menu-button"
                     size="icon"
-                    variant="ghost"
                     onClick={toggleMobileSidebar}
-                    className="md:hidden text-gray-600 hover:bg-gray-200"
-                    aria-label="Open mobile menu"
+                    className="text-gray-600 hover:text-gray-700"
+                    aria-label="Toggle sidebar"
                 >
-                    <Menu className="w-5 h-5" aria-hidden="true" />
+                    <Menu className="w-5 h-5" />
                 </Button>
+
+                {/* Board Name */}
                 <span className="font-bold text-lg tracking-tight">BENTO</span>
             </div>
 
@@ -76,7 +66,18 @@ const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Right Section: Create Button and Action Icons */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
+                {/* Create Bento Button */}
+                <Button
+                    variant="default"
+                    size="sm"
+                    onClick={onCreateBento}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 text-sm"
+                    aria-label="Create new bento board"
+                >
+                    +BENTO
+                </Button>
+                
                 {/* User avatar and notifications */}
                 <Button 
                     variant="ghost" 

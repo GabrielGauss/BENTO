@@ -1,139 +1,121 @@
-import React from "react";
-import {
-    Home,
-    Star,
-    Folder,
-    Share2,
-    FolderPlus,
-    Clock,
-    ThumbsUp,
-    Trash2,
-    Settings,
-} from "lucide-react";
-import { cn } from "../../utils/cn";
-import SidebarButton from "../common/SidebarButton";
+import React from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Home, 
+  Search, 
+  Star, 
+  Clock, 
+  Folder, 
+  Trash2, 
+  Plus
+} from 'lucide-react';
+import Button from '../ui/Button';
 
 interface SidebarProps {
-    isOpen: boolean;
-    isCollapsed: boolean;
-    selectedTag: string | null;
-    clearTag: () => void;
-    className?: string;
-    onNavigate?: (destination: string) => void; // Optional navigation handler
+  isCollapsed: boolean;
+  onNavigateToFavorites?: () => void;
+  onNavigateToTrash?: () => void;
+  onNavigateToMain?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
-    isOpen,
-    isCollapsed,
-    selectedTag,
-    clearTag,
-    onNavigate = () => {},
+const Sidebar: React.FC<SidebarProps> = ({ 
+  isCollapsed, 
+  onNavigateToFavorites, 
+  onNavigateToTrash, 
+  onNavigateToMain 
 }) => {
-    // Define sidebar sections with their items
-    const sidebarSections = [
-        {
-            items: [
-                {
-                    icon: Home,
-                    label: "Home",
-                    isActive: !selectedTag,
-                    onClick: clearTag,
-                },
-                {
-                    icon: Star,
-                    label: "Favorites",
-                    onClick: () => onNavigate("favorites"),
-                },
-                {
-                    icon: Folder,
-                    label: "Collections",
-                    onClick: () => onNavigate("collections"),
-                },
-                {
-                    icon: Share2,
-                    label: "Shared with me",
-                    onClick: () => onNavigate("shared"),
-                },
-            ],
-        },
-        {
-            items: [
-                {
-                    icon: Clock,
-                    label: "Recently Opened",
-                    onClick: () => onNavigate("recent"),
-                },
-                {
-                    icon: FolderPlus,
-                    label: "Drafts",
-                    onClick: () => onNavigate("drafts"),
-                },
-                {
-                    icon: ThumbsUp,
-                    label: "Liked Items",
-                    onClick: () => onNavigate("liked"),
-                },
-                {
-                    icon: Trash2,
-                    label: "Trash",
-                    onClick: () => onNavigate("trash"),
-                },
-            ],
-        },
-        {
-            items: [
-                {
-                    icon: Settings,
-                    label: "Settings",
-                    onClick: () => onNavigate("settings"),
-                },
-            ],
-        },
-    ];
+  const menuItems = [
+    { icon: Home, label: 'Home', count: 0, action: onNavigateToMain || (() => console.log('Navigate to Home')) },
+    { icon: Search, label: 'Search', count: 0, action: () => console.log('Open Search') },
+    { icon: Star, label: 'Favorites', count: 3, action: onNavigateToFavorites || (() => console.log('Show Favorites')) },
+    { icon: Clock, label: 'Recent', count: 0, action: () => console.log('Show Recent') },
+    { icon: Folder, label: 'Collections', count: 2, action: () => console.log('Show Collections') },
+    { icon: Trash2, label: 'Trash', count: 0, action: onNavigateToTrash || (() => console.log('Show Trash')) },
+  ];
 
-    return (
-        <aside
-            id="sidebar"
-            className={cn(
-                "bg-[#23272f] border-r border-gray-700 shadow-lg z-20 shrink-0 rounded-r-2xl font-[Inter,sans-serif]",
-                "transition-all duration-300 ease-in-out",
-                "fixed md:static top-14 bottom-0",
-                isOpen ? "translate-x-0" : "-translate-x-full",
-                "md:translate-x-0",
-                isCollapsed ? "md:w-16" : "md:w-60"
-            )}
-            aria-label="Main navigation"
+  return (
+    <motion.div
+      className={`bg-white border-r border-gray-200 flex flex-col ${
+        isCollapsed ? 'w-16' : 'w-64'
+      } transition-all duration-300 ease-in-out`}
+      initial={{ width: isCollapsed ? 64 : 256 }}
+      animate={{ width: isCollapsed ? 64 : 256 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+    >
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center justify-center">
+          {/* Empty header - no redundant text */}
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2">
+        {menuItems.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <motion.button
+              key={item.label}
+              onClick={item.action}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                item.label === 'Home' 
+                  ? 'bg-purple-50 text-purple-700 border border-purple-200' 
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <Icon className="w-4 h-4 flex-shrink-0" />
+              {!isCollapsed && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex-1 text-left"
+                >
+                  {item.label}
+                </motion.span>
+              )}
+              {!isCollapsed && item.count > 0 && (
+                <motion.span
+                  className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                >
+                  {item.count}
+                </motion.span>
+              )}
+            </motion.button>
+          );
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="p-4 border-t border-gray-200">
+        <Button
+          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+          onClick={() => console.log('Create new board')}
         >
-            <nav className="h-full overflow-y-auto overflow-x-hidden pb-4">
-                {sidebarSections.map((section, sectionIndex) => (
-                    <React.Fragment key={`section-${sectionIndex}`}>
-                        <div className="p-3 space-y-1">
-                            {section.items.map((item) => (
-                                <SidebarButton
-                                    key={item.label}
-                                    icon={item.icon}
-                                    label={item.label}
-                                    isActive={!!item.isActive}
-                                    onClick={item.onClick}
-                                    isCollapsed={isCollapsed}
-                                    aria-current={item.isActive ? "page" : undefined}
-                                />
-                            ))}
-                        </div>
-                        {sectionIndex < sidebarSections.length - 1 && (
-                            <hr
-                                className={cn(
-                                    "my-2 border-gray-700",
-                                    isCollapsed ? "mx-1" : "mx-3"
-                                )}
-                                aria-hidden="true"
-                            />
-                        )}
-                    </React.Fragment>
-                ))}
-            </nav>
-        </aside>
-    );
+          {!isCollapsed && (
+            <motion.div
+              className="flex items-center gap-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Board</span>
+            </motion.div>
+          )}
+          {isCollapsed && <Plus className="w-4 h-4" />}
+        </Button>
+      </div>
+    </motion.div>
+  );
 };
 
-export default React.memo(Sidebar);
+export default Sidebar;

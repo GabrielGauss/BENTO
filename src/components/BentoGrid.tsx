@@ -1,119 +1,83 @@
 import React from 'react';
-import BentoCard from "./items/BentoCard";
-import type { BentoItem } from "../types/bento";
-import { Rnd } from 'react-rnd';
-import type { DraggableEvent, DraggableData } from 'react-draggable';
-import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useDroppable } from '@dnd-kit/core';
+import BentoCard from './items/BentoCard';
+import type { BentoItem } from '../types/bento';
 
 interface BentoGridProps {
   items: BentoItem[];
-  selectedItems: string[];
-  onSelectItem: (id: string, shiftKey: boolean) => void;
-  onDeleteItem: (id: string) => void;
-  onStarItem: (id: string) => void;
-  onEditItem: (item: BentoItem) => void;
-  setBentoItems: React.Dispatch<React.SetStateAction<BentoItem[]>>;
-  onTogglePrivate?: (id: string) => void;
+  onEditItem?: (item: BentoItem) => void;
+  onDeleteItem?: (item: BentoItem) => void;
+  onToggleStar?: (item: BentoItem) => void;
+  onTogglePrivate?: (item: BentoItem) => void;
+  isTrashView?: boolean;
+  selectedItems?: string[];
+  onSelectItem?: (itemId: string) => void;
 }
 
-const BentoGrid: React.FC<BentoGridProps> = ({ items, selectedItems, onSelectItem, onDeleteItem, onStarItem, onEditItem, setBentoItems, onTogglePrivate }) => {
-  // Handler for updating card position/size
-  const handleUpdate = (id: string, data: { x?: number; y?: number; width?: number; height?: number; rotation?: number }) => {
-    setBentoItems(items => items.map(item =>
-      item.id === id ? { ...item, ...data } : item
-    ));
-  };
+const BentoGrid: React.FC<BentoGridProps> = ({
+  items,
+  onEditItem,
+  onDeleteItem,
+  onToggleStar,
+  onTogglePrivate,
+  isTrashView = false,
+  selectedItems = [],
+  onSelectItem,
+}) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'bento-grid',
+  });
 
-  // Track which card is being dragged for z-index and animation
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [resizingId, setResizingId] = useState<string | null>(null);
+  const getGridSpan = (scale: number) => {
+    if (scale <= 1) return 1;
+    if (scale <= 1.5) return 2;
+    if (scale <= 2) return 3;
+    return 4;
+  };
 
   return (
     <div
-      className="relative w-full h-[90vh] min-h-[600px] bg-white bg-[radial-gradient(circle,#e2e8f0_1px,transparent_1px)] bg-[length:30px_30px] px-4 py-6 overflow-auto"
-      style={{ position: 'relative' }}
+      ref={setNodeRef}
+      className={`flex-1 p-6 transition-all duration-200 ${
+        isOver ? 'bg-blue-50 rounded-lg' : ''
+      }`}
     >
-      {items.map((item) => {
-        // Debug: log the item to check for React elements in content
-        if (item && typeof item.content === 'object' && item.content !== null) {
-          console.warn('BentoGrid: item.content is a React element or object:', item);
-        }
-        // Provide defaults if missing
-        const x = item.x ?? Math.random() * 400 + 40;
-        const y = item.y ?? Math.random() * 200 + 40;
-        const width = item.width ?? 320;
-        const height = item.height ?? 200;
-        const rotation = item.rotation ?? ((Math.random() - 0.5) * 4);
-        console.log('BentoGrid: About to render item', item);
-        console.log('BentoGrid: Rnd props', { width, height, x, y, rotation, item });
-        const bentoCardProps = { ...item, rotation, width, height, x, y };
-        console.log('BentoGrid: BentoCard props', bentoCardProps);
-        let card = null;
-        try {
-          card = (
-            <div style={{ width: '100%', height: '100%' }}>
-              <BentoCard
-                item={bentoCardProps}
-                isSelected={selectedItems.includes(item.id) && draggingId !== item.id}
-                onSelect={onSelectItem}
-                onDelete={onDeleteItem}
-                onStar={onStarItem}
-                onEdit={onEditItem}
-                rotation={rotation}
-                style={{ width: '100%', height: '100%' }}
-                onTogglePrivate={onTogglePrivate}
-                dragging={draggingId === item.id}
-                resizing={resizingId === item.id}
-              />
-            </div>
-          );
-        } catch (err) {
-          console.error('BentoGrid: Error rendering BentoCard', { item, err });
-          card = null;
-        }
-        if (!card) return null;
-        const isDragging = draggingId === item.id;
-        const isResizing = resizingId === item.id;
-        return (
-          <Rnd
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 auto-rows-min">
+        {items.map((item) => (
+          <motion.div
             key={item.id}
-            size={{ width, height }}
-            position={{ x, y }}
-            onDragStart={() => setDraggingId(item.id)}
-            onDragStop={(_e: DraggableEvent, d: DraggableData) => {
-              setDraggingId(null);
-              handleUpdate(item.id, { x: d.x, y: d.y });
-            }}
-            onResizeStart={() => setResizingId(item.id)}
-            onResizeStop={(
-              _e,
-              _dir,
-              ref: HTMLElement,
-              _delta,
-              pos: { x: number; y: number }
-            ) => {
-              setResizingId(null);
-              handleUpdate(item.id, {
-                width: ref.offsetWidth,
-                height: ref.offsetHeight,
-                x: pos.x,
-                y: pos.y,
-              });
-            }}
+            className="w-full"
             style={{
-              zIndex: isDragging ? 100 : isResizing ? 90 : selectedItems.includes(item.id) ? 30 : 10,
-              pointerEvents: isDragging ? 'auto' : undefined,
-              transform: `rotate(${rotation}deg)`
+              gridColumn: `span ${getGridSpan(item.scale || 1)}`,
+              gridRow: `span ${getGridSpan(item.scale || 1)}`,
             }}
-            bounds="parent"
-            enableResizing={true}
-            // dragHandleClassName removed for full-card drag
+            layout
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{
+              duration: 0.3,
+              ease: "easeOut",
+              type: "spring",
+              stiffness: 300,
+              damping: 25
+            }}
           >
-            {card}
-          </Rnd>
-        );
-      })}
+            <BentoCard
+              item={item}
+              onEdit={() => onEditItem?.(item)}
+              onDelete={() => onDeleteItem?.(item)}
+              onToggleStar={() => onToggleStar?.(item)}
+              onTogglePrivate={() => onTogglePrivate?.(item)}
+              scale={item.scale || 1}
+              isTrashItem={isTrashView}
+              isSelected={selectedItems.includes(item.id)}
+              onSelect={() => onSelectItem?.(item.id)}
+            />
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 };

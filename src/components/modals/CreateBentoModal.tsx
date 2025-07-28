@@ -1,340 +1,465 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XCircle, Star, Eye, EyeOff } from 'lucide-react';
+import { X, Type, Image, Music, Video, Link, StickyNote, Plus, Star, Eye, EyeOff, Palette } from 'lucide-react';
+import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Textarea from '../ui/textarea';
-import Button from '../ui/Button';
 import type { BentoItem } from '../../types/bento';
 
-const CARD_TYPES = [
-  { type: 'text', label: 'Text' },
-  { type: 'image', label: 'Image' },
-  { type: 'link', label: 'Link' },
-  { type: 'youtube', label: 'YouTube' },
-  { type: 'audio', label: 'Audio' },
-];
-
-// Pastel color palette
-const PASTEL_COLORS = [
-  '#fffbe6', // yellow
-  '#ffe6f7', // pink
-  '#e6f7ff', // blue
-  '#e6ffe6', // green
-  '#f3e6ff', // purple
-  '#fff0e6', // orange
-  '#f9e6ff', // magenta
-];
-
-interface CreateEditBentoModalProps {
+interface CreateBentoModalProps {
   isOpen: boolean;
-  editingItem?: BentoItem | null;
-  onSave: (item: Partial<BentoItem>, editingId?: string) => void;
   onCancel: () => void;
-  isLoading?: boolean;
-  defaultType?: string;
-  existingTags?: string[];
+  onSave: (item: Partial<BentoItem>) => void;
+  editingItem?: BentoItem | null;
 }
 
-const CreateEditBentoModal: React.FC<CreateEditBentoModalProps> = ({
+const CreateBentoModal: React.FC<CreateBentoModalProps> = ({
   isOpen,
-  editingItem = null,
-  onSave,
   onCancel,
-  isLoading = false,
-  defaultType,
-  existingTags = [],
+  onSave,
+  editingItem
 }) => {
-  // State for all fields
-  const [type, setType] = useState<BentoItem['type']>('text');
-  const [content, setContent] = useState('');
-  const [url, setUrl] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
-  const [tagVisible, setTagVisible] = useState(true);
-  const [starred, setStarred] = useState(false);
-  const [title, setTitle] = useState('');
-  const [color, setColor] = useState(PASTEL_COLORS[0]);
-  const [comment, setComment] = useState('');
-  const [showTags, setShowTags] = useState(true);
-  const [scale, setScale] = useState(1);
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    url: '',
+    type: 'text',
+    color: '#fffbe6',
+    tags: [] as string[],
+    starred: false,
+    private: false,
+  });
+  const [newTag, setNewTag] = useState('');
 
-  // Pre-fill fields if editing
+  const colorOptions = [
+    { name: 'Yellow', value: '#fffbe6', label: 'Warm' },
+    { name: 'Pink', value: '#ffe6f7', label: 'Soft' },
+    { name: 'Blue', value: '#e6f7ff', label: 'Cool' },
+    { name: 'Green', value: '#e6ffe6', label: 'Fresh' },
+    { name: 'Purple', value: '#f3e6ff', label: 'Creative' },
+    { name: 'Orange', value: '#fff3e6', label: 'Energetic' },
+  ];
+
   useEffect(() => {
     if (editingItem) {
-      setType(editingItem.type);
-      setContent(
-        typeof editingItem.content === 'string'
-          ? editingItem.content
-          : (editingItem.url || '')
-      );
-      setUrl(editingItem.url || '');
-      setTags(editingItem.tags || []);
-      setTagVisible(editingItem.tagVisible !== false);
-      setStarred(!!editingItem.starred);
-      setTitle(editingItem.title || '');
-      setColor(editingItem.color || PASTEL_COLORS[0]);
-      setComment(editingItem.comment || '');
-      setShowTags(editingItem.showTags !== false);
-      setScale(editingItem.scale || 1);
+      setFormData({
+        title: editingItem.title || '',
+        content: typeof editingItem.content === 'string' ? editingItem.content : '',
+        url: editingItem.url || '',
+        type: editingItem.type || 'text',
+        color: editingItem.color || '#fffbe6',
+        tags: editingItem.tags || [],
+        starred: editingItem.starred || false,
+        private: editingItem.private || false,
+      });
     } else {
-      setType(defaultType || 'text');
-      setContent('');
-      setUrl('');
-      setTags([]);
-      setTagVisible(true);
-      setStarred(false);
-      setTitle('');
-      setColor(PASTEL_COLORS[0]);
-      setComment('');
-      setShowTags(true);
-      setScale(defaultType === 'youtube' || defaultType === 'image' ? 1.7 : 1.2);
+      setFormData({
+        title: '',
+        content: '',
+        url: '',
+        type: 'text',
+        color: '#fffbe6',
+        tags: [],
+        starred: false,
+        private: false,
+      });
     }
-  }, [editingItem, isOpen, defaultType]);
+  }, [editingItem, isOpen]);
 
-  // Validation
-  const isSubmitDisabled =
-    (type === 'text' && !content.trim()) ||
-    (type !== 'text' && !url.trim());
-
-  // Tag add/remove with autocomplete
-  const handleAddTag = () => {
-    const newTag = tagInput.trim();
-    if (newTag && !tags.includes(newTag)) {
-      setTags([...tags, newTag]);
-    }
-    setTagInput('');
-  };
-  const handleRemoveTag = (tag: string) => setTags(tags.filter(t => t !== tag));
-
-  // Tag suggestions: most used tags (by frequency in cards)
-  const tagFrequency = existingTags.reduce((acc, tag) => {
-    acc[tag] = (acc[tag] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  const mostUsedTags = [...existingTags].sort((a, b) => (tagFrequency[b] || 0) - (tagFrequency[a] || 0)).filter(t => !tags.includes(t));
-  const filteredTagSuggestions = tagInput
-    ? mostUsedTags.filter(t => t.toLowerCase().includes(tagInput.toLowerCase()))
-    : mostUsedTags.slice(0, 5);
-
-  // Save handler
   const handleSave = () => {
-    const item: Partial<BentoItem> = {
-      type,
-      title,
-      color,
-      comment: type !== 'text' ? comment : undefined,
-      content: type === 'text' ? content : url,
-      url: type !== 'text' ? url : undefined,
-      tags,
-      tagVisible,
-      starred,
-      showTags,
-      scale,
+    const itemData: Partial<BentoItem> = {
+      id: editingItem?.id || `item-${Date.now()}`,
+      title: formData.title,
+      content: formData.content as React.ReactNode,
+      url: formData.url,
+      type: formData.type as BentoItem['type'],
+      color: formData.color,
+      tags: formData.tags,
+      starred: formData.starred,
+      private: formData.private,
     };
-    onSave(item, editingItem?.id);
+    onSave(itemData);
+    onCancel();
   };
 
-  if (!isOpen) return null;
+  const addTag = () => {
+    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, newTag.trim()]
+      }));
+      setNewTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }));
+  };
+
+  const contentTypes = [
+    { id: 'text', label: 'Text Note', icon: Type, color: '#fffbe6' },
+    { id: 'sticky', label: 'Sticky Note', icon: StickyNote, color: '#ffe6f7' },
+    { id: 'image', label: 'Image', icon: Image, color: '#e6f7ff' },
+    { id: 'audio', label: 'Audio', icon: Music, color: '#f3e6ff' },
+    { id: 'video', label: 'Video', icon: Video, color: '#e6ffe6' },
+    { id: 'link', label: 'Link', icon: Link, color: '#fff3e6' },
+  ];
+
+  const renderContentForm = () => {
+    switch (formData.type) {
+      case 'text':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+              <Textarea
+                value={formData.content}
+                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Write your text note here..."
+                className="w-full h-32 resize-none"
+                style={{ backgroundColor: formData.color }}
+              />
+            </div>
+          </div>
+        );
+
+      case 'sticky':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sticky Note</label>
+              <Textarea
+                value={formData.content}
+                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Write your sticky note here..."
+                className="w-full h-32 resize-none border-yellow-200"
+                style={{ backgroundColor: formData.color }}
+              />
+            </div>
+          </div>
+        );
+
+      case 'image':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>
+              <Input
+                type="url"
+                value={formData.url}
+                onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                placeholder="https://example.com/image.jpg"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Alt Text</label>
+              <Input
+                type="text"
+                value={formData.content}
+                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Description of the image"
+                className="w-full"
+              />
+            </div>
+          </div>
+        );
+
+      case 'audio':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Audio URL</label>
+              <Input
+                type="url"
+                value={formData.url}
+                onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                placeholder="https://example.com/audio.mp3"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <Input
+                type="text"
+                value={formData.content}
+                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Audio title"
+                className="w-full"
+              />
+            </div>
+          </div>
+        );
+
+      case 'video':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Video URL</label>
+              <Input
+                type="url"
+                value={formData.url}
+                onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                placeholder="https://youtube.com/watch?v=..."
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <Input
+                type="text"
+                value={formData.content}
+                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Video title"
+                className="w-full"
+              />
+            </div>
+          </div>
+        );
+
+      case 'link':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">URL</label>
+              <Input
+                type="url"
+                value={formData.url}
+                onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                placeholder="https://example.com"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <Input
+                type="text"
+                value={formData.content}
+                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Link description"
+                className="w-full"
+              />
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className={cn(
-          'fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4'
-        )}
-        onClick={onCancel}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-      >
+      {isOpen && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 10 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="bg-white rounded-2xl shadow-2xl p-8 min-w-[320px] flex flex-col gap-4 font-[Inter,sans-serif]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%23fdf8f4\'/%3E%3Ccircle cx=\'20\' cy=\'20\' r=\'1.5\' fill=\'%23e2e8f0\' fill-opacity=\'0.12\'/%3E%3C/svg%3E")', boxShadow: '0 8px 32px 0 rgba(60, 40, 20, 0.18)' }}
-          onClick={e => e.stopPropagation()}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 id="modal-title" className="text-lg font-semibold">
-              {editingItem ? 'Edit Card' : 'Create New Card'}
-            </h3>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onCancel}
-              className="text-gray-400 hover:bg-gray-100 w-7 h-7"
-              aria-label="Close modal"
-            >
-              <XCircle className="w-5 h-5" />
-            </Button>
-          </div>
+          <motion.div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            style={{ borderLeft: `4px solid ${formData.color}` }}
+          >
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Plus className="w-4 h-4 text-gray-700" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {editingItem ? 'Edit Item' : 'Create New Item'}
+                    </h3>
+                    <p className="text-sm text-gray-500">Add content to your board</p>
+                  </div>
+                </div>
+                <button
+                  onClick={onCancel}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
 
-          {/* Type Selector */}
-          <div className="flex gap-2 mb-4">
-            {CARD_TYPES.map(t => (
-              <Button
-                key={t.type}
-                variant={type === t.type ? 'default' : 'ghost'}
-                className="px-2 py-1 text-xs"
-                onClick={() => setType(t.type as BentoItem['type'])}
-              >
-                {t.label}
-              </Button>
-            ))}
-          </div>
+            {/* Content */}
+            <div className="p-6 space-y-6">
+              {/* Content Type Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Content Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {contentTypes.map((type) => {
+                    const Icon = type.icon;
+                    return (
+                      <button
+                        key={type.id}
+                        onClick={() => setFormData(prev => ({ 
+                          ...prev, 
+                          type: type.id,
+                          color: type.color 
+                        }))}
+                        className={`p-3 rounded-lg border-2 transition-all duration-200 flex items-center gap-2 ${
+                          formData.type === type.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="text-sm font-medium">{type.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {/* Title Input */}
-          <Input
-            type="text"
-            placeholder="Title (optional)"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            className="w-full mb-3 h-9 border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            aria-label="Title"
-          />
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                <Input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Enter title..."
+                  className="w-full"
+                />
+              </div>
 
-          {/* Color Picker */}
-          <div className="flex gap-2 mb-4 items-center">
-            <span className="text-xs text-gray-500">Color:</span>
-            {PASTEL_COLORS.map(c => (
-              <button
-                key={c}
-                className={`w-6 h-6 rounded-full border-2 ${color === c ? 'border-black' : 'border-transparent'}`}
-                style={{ background: c }}
-                onClick={() => setColor(c)}
-                aria-label={`Select color ${c}`}
-              />
-            ))}
-          </div>
+              {/* Content Form */}
+              {renderContentForm()}
 
-          {/* Content Input */}
-          {type === 'text' ? (
-            <Textarea
-              placeholder="Enter your text here..."
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              className="w-full min-h-[100px] mb-4 border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              autoFocus
-              aria-label="Text content"
-            />
-          ) : (
-            <Input
-              type="url"
-              placeholder={`Enter URL for ${type}... (e.g., https://...)`}
-              value={url}
-              onChange={e => setUrl(e.target.value)}
-              className="w-full mb-4 h-10 border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              autoFocus
-              aria-label="URL"
-            />
-          )}
-
-          {/* Tags */}
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-1 relative">
-              <Input
-                type="text"
-                placeholder="Add tag..."
-                value={tagInput}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); }}}
-                className="w-32 h-7 text-xs"
-                autoComplete="off"
-              />
-              <Button size="sm" onClick={handleAddTag} className="px-2 py-1 text-xs">Add</Button>
-              {filteredTagSuggestions.length > 0 && (
-                <div className="absolute left-0 top-8 bg-white border rounded shadow-lg z-30 w-32 max-h-32 overflow-auto">
-                  {filteredTagSuggestions.map(suggestion => (
+              {/* Color Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <Palette className="w-4 h-4" />
+                  Card Color
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {colorOptions.map((color) => (
                     <button
-                      key={suggestion}
-                      className="block w-full text-left px-2 py-1 text-xs hover:bg-blue-100"
-                      onClick={() => { setTags([...tags, suggestion]); setTagInput(''); }}
+                      key={color.value}
+                      onClick={() => setFormData(prev => ({ ...prev, color: color.value }))}
+                      className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+                        formData.color === color.value
+                          ? 'border-gray-800 scale-105'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      style={{ backgroundColor: color.value }}
                     >
-                      #{suggestion}
+                      <div className="text-xs font-medium text-gray-700">
+                        {color.name}
+                      </div>
+                      <div className="text-xs text-gray-500">{color.label}</div>
                     </button>
                   ))}
                 </div>
-              )}
+              </div>
+
+              {/* Tags */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    type="text"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    placeholder="Add tag..."
+                    className="flex-1"
+                    onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                  />
+                  <Button onClick={addTag} size="sm">
+                    Add
+                  </Button>
+                </div>
+                {formData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {formData.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                      >
+                        #{tag}
+                        <button
+                          onClick={() => removeTag(tag)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Options with Switch Toggles */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    <span className="text-sm font-medium">Starred</span>
+                  </div>
+                  <button
+                    onClick={() => setFormData(prev => ({ ...prev, starred: !prev.starred }))}
+                    className={`w-12 h-6 rounded-full transition-colors ${
+                      formData.starred ? 'bg-yellow-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                      formData.starred ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {formData.private ? <EyeOff className="w-4 h-4 text-red-500" /> : <Eye className="w-4 h-4 text-gray-500" />}
+                    <span className="text-sm font-medium">Private</span>
+                  </div>
+                  <button
+                    onClick={() => setFormData(prev => ({ ...prev, private: !prev.private }))}
+                    className={`w-12 h-6 rounded-full transition-colors ${
+                      formData.private ? 'bg-red-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                      formData.private ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1">
-              {tags.map(tag => (
-                <span key={tag} className="bg-gray-200 text-xs rounded-full px-2 py-0.5 flex items-center gap-1">
-                  #{tag}
-                  <button onClick={() => handleRemoveTag(tag)} className="ml-1 text-gray-500 hover:text-red-500">&times;</button>
-                </span>
-              ))}
+
+            {/* Footer */}
+            <div className="flex gap-3 p-6 border-t border-gray-200">
+              <Button
+                onClick={onCancel}
+                variant="ghost"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                className="flex-1"
+                disabled={!formData.title.trim()}
+                style={{ backgroundColor: formData.color, color: '#000' }}
+              >
+                {editingItem ? 'Update' : 'Create'}
+              </Button>
             </div>
-          </div>
-
-          {/* Show/Hide Tags Toggle */}
-          <div className="flex items-center gap-2 mb-2 mt-2">
-            <button
-              type="button"
-              className="rounded-full bg-white/80 border border-gray-300 px-2 py-1 text-xs flex items-center gap-1 hover:bg-gray-100 transition"
-              title={showTags ? 'Hide tags on card' : 'Show tags on card'}
-              onClick={() => setShowTags(v => !v)}
-            >
-              {showTags ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              <span>{showTags ? 'Hide tags on card' : 'Show tags on card'}</span>
-            </button>
-          </div>
-
-          {/* Starred Toggle */}
-          <div className="flex items-center gap-2 mb-4">
-            <Button
-              variant={starred ? 'default' : 'ghost'}
-              size="icon"
-              className={starred ? 'text-yellow-500' : 'text-gray-400'}
-              onClick={() => setStarred(v => !v)}
-              title={starred ? 'Unfavorite' : 'Favorite'}
-            >
-              <Star className="w-4 h-4" />
-            </Button>
-            <span className="text-xs">{starred ? 'Favorited' : 'Not favorited'}</span>
-          </div>
-
-          {/* Comment for non-text types */}
-          {type !== 'text' && (
-            <Textarea
-              placeholder="Add a comment or note..."
-              value={comment}
-              onChange={e => setComment(e.target.value)}
-              className="w-full min-h-[60px] mb-4 border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              aria-label="Comment"
-            />
-          )}
-
-          {/* Save/Cancel */}
-          <div className="flex justify-end gap-3 mt-2">
-            <Button
-              variant="ghost"
-              onClick={onCancel}
-              className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md"
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="bg-black text-white hover:bg-gray-800 px-4 py-2 rounded-md"
-              disabled={isSubmitDisabled || isLoading}
-              aria-label={editingItem ? 'Save changes' : 'Add card'}
-            >
-              {editingItem ? 'Save' : 'Add Card'}
-            </Button>
-          </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   );
 };
 
-function cn(...classes: string[]) {
-    return classes.filter(Boolean).join(' ');
-}
-
-export default React.memo(CreateEditBentoModal);
+export default CreateBentoModal;

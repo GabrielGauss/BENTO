@@ -21,3 +21,9 @@ export interface BentoItem {
   width?: number; // Card width (px)
   height?: number; // Card height (px)
 }
+
+export interface FABItem {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  type: string;
+}

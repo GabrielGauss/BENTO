@@ -1,6 +1,5 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Folder, Download, Trash2, XCircle } from "lucide-react";
-import { cn } from "@/utils/cn";
 import Button from "./Button";
 
 interface MultiSelectToolbarProps {
@@ -10,14 +9,14 @@ interface MultiSelectToolbarProps {
     onMove: () => void;
     onDeleteSelected: () => void;
 }
-// This component seems clean and doesn't have obvious unused code.
-const MultiSelectToolbar = ({ selectedCount, onDeselect, onExport, onMove, onDeleteSelected }) => {
+
+const MultiSelectToolbar: React.FC<MultiSelectToolbarProps> = ({ selectedCount, onDeselect, onExport, onMove, onDeleteSelected }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="fixed top-28 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-full px-3 py-1.5 z-20 flex gap-2 items-center border"
+      className="fixed top-28 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-full px-3 py-1.5 z-[9995] flex gap-2 items-center border"
     >
       <span className="text-sm font-medium px-2">{selectedCount} selected</span>
       <Button

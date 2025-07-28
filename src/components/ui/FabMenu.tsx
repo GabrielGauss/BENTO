@@ -1,14 +1,12 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from "./Button";
-import { BentoItem } from "../../types/bento";
 
-// Define the FABItem interface (assuming it's not imported globally)
 interface FABItem {
     // biome-ignore lint/suspicious/noExplicitAny: TODO: Define a proper type for FABItem icon
     icon: React.ComponentType<{ className?: string }>;
     label: string;
-    type: BentoItem['type'];
+    type: string;
 }
 
 interface FabMenuProps {
@@ -17,7 +15,7 @@ interface FabMenuProps {
     items: FABItem[];
 }
 
-const FabMenu = ({ isOpen, onSelectFabItem, items }) => {
+const FabMenu: React.FC<FabMenuProps> = ({ isOpen, onSelectFabItem, items }) => {
 
     return (
         <AnimatePresence>
@@ -30,12 +28,12 @@ const FabMenu = ({ isOpen, onSelectFabItem, items }) => {
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     className="absolute bottom-16 right-0 flex flex-col items-end gap-3" // Use items-end for alignment
                 >
-                    {items.map((item) => (
+                    {items.map((item: FABItem) => (
                         // Each item container uses flex and justify-end
                         <div key={item.label} className="flex items-center justify-end gap-2 group w-full">
                             {/* Tooltip */}
                             <span className="bg-black text-white text-xs px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap order-1"> {/* Order tooltip first visually */}
-                                {item.label}
+                                {item.label === 'Text' ? 'Stickynote' : item.label}
                             </span>
                             {/* Button */}
                             <Button
